@@ -1,55 +1,103 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import MapView, {Polyline, ProviderPropType} from "react-native-maps";
-import data from './assets/route.js'
-const COORDINATES = [
-  { latitude: 43.8025259, longitude: -122.4351431 },
-  { latitude: 37.7896386, longitude: -122.421646 },
-  { latitude: 37.7665248, longitude: -122.4161628 },
-  { latitude: 37.7734153, longitude: -122.4577787 },
-  { latitude: 37.7948605, longitude: -122.4596065 },
-  { latitude: 37.8025259, longitude: -122.4351431 },
-];
 
-console.log(data)
+import { AppLoading } from "expo";
+
+import AppNavigator from "./navigation/AppNavigator";
+
+import {AnonymousCredential, Stitch} from "mongodb-stitch-react-native-sdk";
+
+// console.log(data)
 
 export default class App extends React.Component {
 
-  render()
-  {
-    return (
-        <MapView
-            provider={this.props.provider}
-            initialRegion={{
-              latitude: 42.42268,
-              longitude: -76.4952,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-            style={styles.map}>
+    constructor(props){
+        super(props);
+        this.state = {
+            currentUserId: undefined,
+            client: undefined,
+            isLoadingComplete: false
+        };
+        this.loadClient = this.loadClient.bind(this);
+    }
 
-          <Polyline coordinates={data}
-                    strokeColor={'#F00000'}
-                    strokeWidth={1}/>
+    componentDidMount(){
+        this.loadClient(); // loads the client application from stitch
+    }
 
+    render(){
 
-        </MapView>
+            return(
+                <View style={styles.container}>
+                    <AppNavigator/>
+                </View>
+            )
+    }
 
-    );
+    handleLoadingError = error => {
+        console.warn(error);
+    };
+
+    handleFinishLoading = () => {
+        console.log('application loaded')
+        this.setState({ isLoadingComplete: true });
+    };
+
+    loadClient(){
+      Stitch.initializeDefaultAppClient("cara-pvrxo").then(client => {
+          this.setState({client}) //set the client in state
+          this.state.client.auth
+              .loginWithCredential(new AnonymousCredential())
+              .then(user => {
+                  console.log('Log In Success as user: ' + user.id );
+                  this.setState({currentUserId: user.id});
+                  this.setState({currentUserId: client.auth.user.id})
+              })
+              .catch(err => {
+                  console.log('Failed to Log In: ' + err);
+                  this.setState({currentUserId: undefined})
+              })
+      })
   }
 }
 
-App.propTypes = {
-  provider: ProviderPropType,
-};
-
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+      backgroundColor: '#fff'
   },
 });
+
+// const AppNavigator = createStackNavigator({
+//     Login:{
+//         screen: Login,
+//         navigationOptions:{
+//             headerShown: false,
+//         }
+//     },
+//     Signup:{
+//         screen: Signup,
+//         navigationOptions:{
+//             headerShown: false,
+//         }
+//
+//     },
+//     Loading:{
+//         screen: Loading,
+//         navigationOptions:{
+//             headerShown: false,
+//         }
+//     },
+//     About:{
+//         screen: About,
+//         navigationOptions:{
+//             headerShown: false,
+//         }
+//     },
+//     Home:{
+//         screen: Home,
+//         navigationOptions:{
+//             headerShown: false,
+//         }
+//     }
+// });

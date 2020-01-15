@@ -31,6 +31,6 @@ for node in route:
         'longitude': lat
     })
 
-with open('cara/assets/route.js', 'w') as outfile:
-    json.dump(routeJSON, outfile)
+# with open('../assets/route.js', 'w') as outfile:
+#     json.dump(routeJSON, outfile)
 
