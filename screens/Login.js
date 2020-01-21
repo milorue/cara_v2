@@ -19,7 +19,8 @@ export default class Login extends React.Component{
     }
 
     signUp(){
-        this.props.navigation.navigate('Signup')
+        console.log('goTo SignUp')
+        this.props.navigation.navigate('SignUp')
     }
 
     learnMore(){

@@ -11,6 +11,7 @@ import Map from "../screens/Map";
 import Community from "../screens/Community";
 import {IconButton} from "react-native-paper";
 import ConceptHome from "../screens/ConceptHome";
+import FeatureMap from "../screens/FeatureMap";
 
 
 const LoginStack = createStackNavigator({
@@ -52,6 +53,12 @@ const HomeStack = createStackNavigator({
 const MapStack = createStackNavigator({
     Map:{
         screen: Map,
+        navigationOptions:{
+            headerShown: false,
+        }
+    },
+    FeatureMap:{
+        screen: FeatureMap,
         navigationOptions:{
             headerShown: false,
         }

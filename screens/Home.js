@@ -109,14 +109,17 @@ export default class Home extends React.Component{
             currentUserId: undefined,
             client: undefined,
             routes: undefined,
+            favorites: undefined,
             refreshing: false,
+            favRefreshing: false,
             image: 'https://picsum.photos/500/300'
         };
-        this.loadClient = this.loadClient.bind(this);
+        this.loadRecents = this.loadRecents.bind(this);
     }
 
     componentDidMount(){
-        this.loadClient();
+        this.loadRecents();
+        this.loadFavorites();
     }
 
     createCollection = () => {
@@ -139,7 +142,7 @@ export default class Home extends React.Component{
         const db = mongoClient.db('cara');
         const routes = db.collection('routes');
         console.log('Instantiated Client Load') // instantiates our mongo client to read from
-        routes.find({favorite: true}, {sort: {date: -1}})
+        routes.find({recent: true}, {sort: {date: -1}})
             .asArray()
             .then(docs=>{
                 this.setState({routes: docs});
@@ -150,7 +153,28 @@ export default class Home extends React.Component{
             });
     };
 
-    loadClient(){
+    refreshFavs = () => {
+        this.setState({favRefreshing: true});
+        const stitchAppClient = Stitch.defaultAppClient;
+        const mongoClient = stitchAppClient.getServiceClient(
+            RemoteMongoClient.factory,
+            'mongodb-atlas'
+        );
+        const db = mongoClient.db('cara');
+        const favorites = db.collection('favorites');
+        console.log('Reloading favorites');
+        favorites.find({favorite: true}, {sort: {date: -1}})
+            .asArray()
+            .then(docs =>{
+                this.setState({favorites: docs});
+                this.setState({favRefreshing: false});
+            })
+            .catch(err =>{
+                console.warn(err);
+            })
+    };
+
+    loadRecents(){
         const stitchAppClient = Stitch.defaultAppClient;
         const mongoClient = stitchAppClient.getServiceClient(
             RemoteMongoClient.factory,
@@ -168,6 +192,56 @@ export default class Home extends React.Component{
                 console.warn(err);
             });
     }
+
+    loadFavorites(){
+        const stitchAppClient = Stitch.defaultAppClient;
+        const mongoClient = stitchAppClient.getServiceClient(
+            RemoteMongoClient.factory,
+            'mongodb-atlas'
+        );
+
+        const db = mongoClient.db('cara');
+        const favorites = db.collection('favorites');
+        favorites.find({favorite: true}, {sort: {date: -1}})
+            .asArray()
+            .then(docs =>{
+                this.setState({favorites: docs});
+            })
+            .catch(err => {
+                console.warn(err);
+            })
+    };
+
+    addFavorite = (obj) =>{
+        const stitchAppClient = Stitch.defaultAppClient;
+        const mongoClient = stitchAppClient.getServiceClient(
+            RemoteMongoClient.factory,
+            'mongodb-atlas'
+        );
+
+        const db = mongoClient.db('cara');
+        const favorites = db.collection('favorites');
+
+        favorites.insertOne({
+            title: obj.title,
+            description: obj.description,
+            icon: obj.icon,
+            color: obj.color,
+            visible: obj.visible,
+            route: obj.route,
+            favorite: true,
+            recent: true,
+            date: obj.date,
+            image: obj.image,
+            type: obj.type,
+        })
+            .then(()=>{
+                console.log('Favorite ' + obj._id + ' added')
+            })
+            .catch(err =>{
+                console.warn(err)
+            })
+    };
 
 
     _showModal = (modalId) => {
@@ -207,9 +281,34 @@ export default class Home extends React.Component{
         });
     };
 
+    deleteFavorite = (favId) => {
+        const stitchAppClient = Stitch.defaultAppClient;
+        const mongoClient = stitchAppClient.getServiceClient(
+            RemoteMongoClient.factory,
+            'mongodb-atlas'
+        );
+        const db = mongoClient.db('cara'); // loads db from stitch
+        const favorites = db.collection('favorites');
+        favorites.deleteOne({_id: favId}).then(()=>{
+        favorites.find({favorite: true}, {sort: {date: -1}})
+            .asArray().then(docs =>{
+                this.setState({favorites: docs});
+                this.refreshFavs();
+                console.log(favId + ' deleted');
+        })
+            .catch(err => {
+                console.warn(err);
+            })
+            }).catch(err =>{
+                console.warn(err)
+        })
+    };
+
+
+
     renderModal =() =>{
 
-            console.log(this.state.currentModalId)
+            console.log(this.state.currentModalId);
 
             if (this.state.modalVisible) {
 
@@ -224,6 +323,8 @@ export default class Home extends React.Component{
                                 <Card.Content>
                                     <Card.Cover source={{uri: itemInfo.image}}/>
                                     <Paragraph>{itemInfo.description}</Paragraph>
+                                    <Button icon={'star'} mode={'contained'} onPress={() => this.addFavorite(itemInfo)}
+                                    style={{marginHorizontal: 60, marginVertical: 20}} color={'#E6C419'}>Favorite</Button>
                                 </Card.Content>
                             </Card>
                         </Modal>)
@@ -242,7 +343,7 @@ export default class Home extends React.Component{
             }else{
                 return null
             }
-    }
+    };
 
 
 
@@ -256,10 +357,29 @@ export default class Home extends React.Component{
                                left={props => <IconButton {...props} icon={'camera-control'} onPress={() => console.log('Map Press')}
                                                          color={'#14002E'} size={30}/>}
                                right={props => <IconButton {...props} icon={'delete'} onPress={() => this.deleteRoute(itemInfo._id)} size={30}
-                                                           color={'#DE606D'}
+                                                           color={'#E44953'}
                                                            />}
                                onPress={() => this._showModal(itemInfo._id)}
                                style={styles.listItem}/>
+                )
+            })
+        }
+        else{
+            return null
+        }
+    }
+
+    favorites(){
+        if(this.state.showFavorites){
+            return this.state.favorites.map((favInfo) => {
+                return(
+                    <List.Item key={favInfo._id} title={favInfo.title} description={favInfo.description}
+                    left={props => <IconButton {...props} icon={'star'} onPress={() => console.log('Map Press')}
+                    color={'white'} size={30}/>}
+                    right={props => <IconButton {...props} icon={'delete'} onPress={() => this.deleteFavorite(favInfo._id)}
+                                                size={30} color={'#E44953'}/>}
+                    onPress={() => console.log('Fav press')}
+                    style={styles.favItem}/> //need to implement
                 )
             })
         }
@@ -329,8 +449,8 @@ export default class Home extends React.Component{
                 </Appbar>
 
                 <View style={styles.buttonContainer}>
-                    <Button style={styles.listSelecters} icon={'star'} mode={'contained'} labelStyle={styles.selecterText} color={'#F7F888'} onPress={() => this.renderFavorites()}>Favorites</Button>
-                    <Button style={styles.listSelecters} icon={'history'} mode={'contained'} labelStyle={styles.selecterText} color={'#8A88F8'} onPress={() => this.renderRecent()}>Recent</Button>
+                    <Button style={styles.listSelecters} icon={'star'} mode={'contained'} labelStyle={styles.selecterText} color={'#E6C419'} onPress={() => this.renderFavorites()}>Favorites</Button>
+                    <Button style={styles.listSelecters} icon={'history'} mode={'contained'} labelStyle={styles.selecterText} color={'lightgrey'} onPress={() => this.renderRecent()}>Recent</Button>
                     <Button style={styles.listSelecters} icon={'alert'} mode={'contained'} labelStyle={styles.selecterText} color={'#DE606D'} onPress={() => this.renderAlerts()}>Alerts</Button>
                 </View>
                 {/*Shows Alerts*/}
@@ -342,97 +462,10 @@ export default class Home extends React.Component{
 
                 {/*Shows Favorites*/}
                 {this.state.showFavorites ?
-                    <ScrollView style={styles.avatarContainer}>
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
-                    <List.Item
-                        title={'Test Route'}
-                        description={'Hidden behind the elevator'}
-                        left={props => <List.Icon {...props} icon="pin" color={this.determineColor()}
-                        />}
-                        right={props => <IconButton {...props} icon={'dots-vertical'} size={40}
-                                                    onPress={() => console.log('More Press')}/>}
-                        onPress={() => console.log('List Press')}
-                        style={styles.listItem}
-                    />
+                    <ScrollView style={styles.avatarContainer}
+                    refreshControl={<RefreshControl refreshing={this.state.favRefreshing}
+                    onRefresh={this.refreshFavs}/>}>
+                        {this.favorites()}
                 </ScrollView> : null}
 
                 {/*Shows Recent*/}
@@ -462,6 +495,11 @@ const styles = StyleSheet.create({
     },
     listItem:{
         backgroundColor: 'lightgrey',
+        margin: 10,
+        borderRadius: 5,
+    },
+    favItem:{
+        backgroundColor: '#E6C419',
         margin: 10,
         borderRadius: 5,
     },

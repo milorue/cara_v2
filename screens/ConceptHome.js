@@ -1,7 +1,7 @@
 import React from 'react';
 import {Platform, StyleSheet, View, ScrollView,
   Keyboard, Dimensions} from "react-native";
-import {TextInput, Caption, Button} from "react-native-paper";
+import {TextInput, Caption, Button, Menu} from "react-native-paper";
 import { Stitch, RemoteMongoClient } from "mongodb-stitch-react-native-sdk";
 
 export default class ConceptHome extends React.Component{
@@ -13,12 +13,12 @@ export default class ConceptHome extends React.Component{
             title: '',
             description: '',
             icon: 'pin',
-            color: 'red',
+            color: ['#EE5B5C', '#6670CC', '#D9E54D', '#53E052'],
             visible: false,
             image: 'https://picsum.photos/500/300',
             id: 0,
             route: [{latitude: 10, longitude: 20}],
-            favorite: true, // needs to be changed when in production (will always favorite things)
+            favorite: false, // needs to be changed when in production (will always favorite things)
 
 
         }
@@ -56,13 +56,14 @@ export default class ConceptHome extends React.Component{
                 title: this.state.title,
                 description: this.state.description,
                 icon: this.state.icon,
-                color: this.state.color,
+                color: this.determineColor(),
                 visible: this.state.visible,
                 route: this.state.route,
                 favorite: this.state.favorite,
                 recent: true,
                 date: new Date(),
-                image: this.generateImage()
+                image: this.generateImage(),
+                type: 'default'
             })
                 .then(() => {
                     this.setState({value: !this.state.value})
@@ -75,6 +76,11 @@ export default class ConceptHome extends React.Component{
                     console.warn(err);
                 });
         }
+    }
+
+    determineColor(){
+        var randNum = Math.floor(Math.random() * 4);
+        return this.state.color[randNum]
     }
 
     render(){
