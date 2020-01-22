@@ -7,6 +7,8 @@ import AppNavigator from "./navigation/AppNavigator";
 
 import {AnonymousCredential, Stitch} from "mongodb-stitch-react-native-sdk";
 
+import appCredential from "./credentials";
+
 // console.log(data)
 
 export default class App extends React.Component {
@@ -44,7 +46,7 @@ export default class App extends React.Component {
     };
 
     loadClient(){
-      Stitch.initializeDefaultAppClient("cara-pvrxo").then(client => {
+      Stitch.initializeDefaultAppClient(appCredential).then(client => {
           this.setState({client}) //set the client in state
           this.state.client.auth
               .loginWithCredential(new AnonymousCredential())
