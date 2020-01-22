@@ -16,8 +16,28 @@ guest login. As a guest you can still utilize Cara's maps, routes, news feed, al
 4. **My route was inaccurate or didn't plot a route at all why?**
 * Cara is in an extremely beta state and many of the kinks, bugs, and features are undergoing iteration. If you run into any issues feel free to report them to the issues
  section of this repo.
- 5. **I'm experiencing app layout issues help!?
+ 5. **I'm experiencing app layout issues help!?**
  * The application is currently in active development and some formats may not be supported (ex: iPhone 3/4, Note 6, etc) feel free to notify me via the issues section on
   formats that aren't currently supported or have issues
  6. **What technologies does this application utilize?**
  * This app is built primarily using React Native and JavaScript ES6 on the frontend. Much of
+---
+### Tech Stack
+#### Front-end Stack:
+* React Native CLI
+* Expo CLI
+* React Native Paper
+* ReactJS
+* React-Native-Maps
+
+#### Database Stack:
+* MongoDB
+* MongoDB Stitch
+* PostgreSQL GIS
+
+#### Backend Stack:
+* PHP
+* Flask/Django
+* Python
+* OSM SDK
+* OSMNX & NETWORKX
