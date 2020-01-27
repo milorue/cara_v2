@@ -71,8 +71,8 @@ export default class Map extends React.Component{
         );
 
         const db = mongoClient.db('cara');
-        const favorites = db.collection('routes');
-        favorites.find({recent: true}, {sort: {date: -1}}) //sort by recent dates
+        const favorites = db.collection('favorites');
+        favorites.find({favorite: true}, {sort: {date: -1}}) //sort by recent dates
             .asArray()
             .then(docs => {
                 this.setState({favoritesList: docs});
@@ -139,7 +139,7 @@ export default class Map extends React.Component{
             return this.state.favoritesList.map((favoriteInfo) => {
                 return (
                     <List.Item key={favoriteInfo._id} title={favoriteInfo.title}
-                               left={props => <List.Icon {...props} icon={favoriteInfo.icon} color={favoriteInfo.color} size={30}/>}
+                               left={props => <List.Icon {...props} icon={'border-inside'} color={favoriteInfo.color} size={40}/>}
                                right={props => <IconButton {...props} icon={'camera-control'} onPress={() => console.log("Execute Route")}
                                color={"#14002E"} size={30}/>}
                     onPress={() => {this.showModal(favoriteInfo._id); this.closeFavorites()}} style={{paddingHorizontal: 30}}/>

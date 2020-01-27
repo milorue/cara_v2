@@ -78,10 +78,10 @@ const TabNavigator = createMaterialBottomTabNavigator({
     Home:{
         screen: HomeStack,
         navigationOptions:{
-            tabBarColor: '#14002E',
+            tabBarColor: 'white',
             tabBarIcon: <IconButton
             icon={'home'}
-            color={'#ffffff'}
+            color={'black'}
             size={30}
             style={{paddingBottom: 25}}/>
         }
@@ -89,10 +89,10 @@ const TabNavigator = createMaterialBottomTabNavigator({
     Maps:{
         screen: MapStack,
         navigationOptions:{
-            tabBarColor: '#14002E',
+            tabBarColor: 'white',
             tabBarIcon: <IconButton
             icon={'map'}
-            color={'#ffffff'}
+            color={'black'}
             size={30}
             style={{paddingBottom: 25}}/>
         }
@@ -100,22 +100,23 @@ const TabNavigator = createMaterialBottomTabNavigator({
     Community:{
         screen: CommunityStack,
         navigationOptions:{
-            tabBarColor: '#14002E',
+            tabBarColor: 'white',
             tabBarIcon: <IconButton
             icon={'account-multiple'}
-            color={'#ffffff'}
+            color={'black'}
             size={30}
             style={{paddingBottom: 25}}
             />,
+            tabBarAccessibilityLabel: 'Community Tab'
         }
     },
     Testing:{
         screen: ConceptHome,
         navigationOptions:{
-            tabBarColor: '#14002E',
+            tabBarColor: 'white',
             tabBarIcon: <IconButton
             icon={'alert'}
-            color={'#ffffff'}
+            color={'black'}
             size={30}
             style={{paddingBottom: 25}}
             />,

@@ -222,25 +222,47 @@ export default class Home extends React.Component{
         const db = mongoClient.db('cara');
         const favorites = db.collection('favorites');
 
-        favorites.insertOne({
-            title: obj.title,
-            description: obj.description,
-            icon: obj.icon,
-            color: obj.color,
-            visible: obj.visible,
-            route: obj.route,
-            favorite: true,
-            recent: true,
-            date: obj.date,
-            image: obj.image,
-            type: obj.type,
-        })
-            .then(()=>{
-                console.log('Favorite ' + obj._id + ' added')
+        favorites.find({_id: obj._id})
+            .asArray()
+            .then(docs =>{
+
+                console.log(docs);
+
+                if(docs.length === 0){
+                    favorites.insertOne({
+                        _id: obj._id,
+                        title: obj.title,
+                        description: obj.description,
+                        icon: obj.icon,
+                        color: obj.color,
+                        visible: obj.visible,
+                        route: obj.route,
+                        favorite: true,
+                        recent: true,
+                        date: obj.date,
+                        image: obj.image,
+                        type: obj.type,
+                    })
+                    .then(()=>{
+                        console.log('Favorite ' + obj._id + ' added')
+                    })
+                    .catch(err =>{
+                        console.warn(err)
+                    })
+                }
+                else{
+                    console.log('Favorite ' + obj._id + ' was not added as its a duplicate')
+                }
+
+
+
             })
             .catch(err =>{
                 console.warn(err)
-            })
+
+        })
+
+
     };
 
 
@@ -375,7 +397,7 @@ export default class Home extends React.Component{
                 return(
                     <List.Item key={favInfo._id} title={favInfo.title} description={favInfo.description}
                     left={props => <IconButton {...props} icon={'star'} onPress={() => console.log('Map Press')}
-                    color={'white'} size={30}/>}
+                    color={'black'} size={30}/>}
                     right={props => <IconButton {...props} icon={'delete'} onPress={() => this.deleteFavorite(favInfo._id)}
                                                 size={30} color={'#E44953'}/>}
                     onPress={() => console.log('Fav press')}
@@ -441,11 +463,11 @@ export default class Home extends React.Component{
     render(){
         return(
             <View style={styles.container}>
-                <Appbar style={{paddingTop: 50, paddingBottom: 30, marginBottom: 10, flexDirection: 'row', alignContent: 'center', backgroundColor: '#14002E'}}>
+                <Appbar style={{paddingTop: 50, paddingBottom: 30, marginBottom: 10, flexDirection: 'row', alignContent: 'center', backgroundColor: 'white'}}>
                     <View style={{flex: 1}}>
-                    <Avatar.Text size={47} label={'MR'} style={{backgroundColor: '#656D9A'}} labelStyle={{fontSize: 20, fontWeight: 'bold'}}/>
+                    <Avatar.Text size={47} label={'MR'} style={{backgroundColor: 'lightgrey'}} labelStyle={{fontSize: 20, fontWeight: 'bold'}}/>
                     </View>
-                    <Appbar.Action icon='settings' onPress={() => console.log('Settings press')} color={'white'}/>
+                    <Appbar.Action icon='settings' onPress={() => console.log('Settings press')} color={'black'}/>
                 </Appbar>
 
                 <View style={styles.buttonContainer}>
