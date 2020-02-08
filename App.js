@@ -5,7 +5,7 @@ import { AppLoading } from "expo";
 
 import AppNavigator from "./navigation/AppNavigator";
 
-import {AnonymousCredential, Stitch} from "mongodb-stitch-react-native-sdk";
+import {AnonymousCredential, Stitch, UserPasswordCredential} from "mongodb-stitch-react-native-sdk";
 
 import appCredential from "./credentials";
 
@@ -46,22 +46,13 @@ export default class App extends React.Component {
     };
 
     loadClient(){
-      Stitch.initializeDefaultAppClient(appCredential).then(client => {
-          this.setState({client}) //set the client in state
-          this.state.client.auth
-              .loginWithCredential(new AnonymousCredential())
-              .then(user => {
-                  console.log('Log In Success as user: ' + user.id );
-                  this.setState({currentUserId: user.id});
-                  this.setState({currentUserId: client.auth.user.id})
-              })
-              .catch(err => {
-                  console.log('Failed to Log In: ' + err);
-                  this.setState({currentUserId: undefined})
-              })
-      })
+
+
+      console.log('Initialized Stitch')
   }
 }
+
+
 
 const styles = StyleSheet.create({
   container: {

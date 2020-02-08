@@ -37,8 +37,8 @@ export default class FeatureMap extends React.Component{
             type: '',
             markerId: undefined,
             location: {
-                latitude: 42,
-                longitude: -76,
+                latitude: 0,
+                longitude: 0,
                 latitudeDelta: 0.0101,
                 longitudeDelta: 0.0101,
             },
@@ -79,7 +79,6 @@ export default class FeatureMap extends React.Component{
                                     <Card style={{width: width/2}}>
                                         <Card.Title title={markerInfo.name} titleStyle={{fontSize: 10}}/>
                                         <Card.Content>
-                                            {console.log(markerInfo.image._data.size)}
                                             <Card.Cover source={{uri: "https://picsum.photos/200/100"}} style={{height: 100}}/>
                                             <Caption style={{fontSize: 8}}>Type: {markerInfo.type}</Caption>
                                             <Paragraph style={{fontSize: 10}}>{markerInfo.description}</Paragraph>
@@ -259,7 +258,7 @@ export default class FeatureMap extends React.Component{
                 </View>
                 <View style={styles.interactionLayer}>
                     <Button mode={'contained'} icon={'pin'} color={'white'} style={styles.addButton} onPress={this.openMarkerList}>View All</Button>
-                    <Button mode={'contained'} icon={'plus'} color={'#EE5B5C'} style={styles.addButton} onPress={this.showModal}>Add</Button>
+                    <Button mode={'contained'} icon={'plus'} color={'#000556'} style={styles.addButton} onPress={this.showModal}>Add</Button>
                     <Button mode={'contained'} icon={'arrow-left'} color={'white'} style={styles.addButton} onPress={this.goBack}>Go Back</Button>
                 </View>
                 <Modal visible={this.state.modalVisible} onDismiss={this.hideModal}
@@ -365,7 +364,7 @@ const styles = StyleSheet.create({
     addModal:{
         top: '10%',
         width: width/1.3,
-        backgroundColor: 'white',
+        backgroundColor: 'whitesmoke',
     }
 
 

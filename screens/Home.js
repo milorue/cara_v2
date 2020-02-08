@@ -1,11 +1,16 @@
 import React from 'react';
 import {View, Text, StyleSheet, ScrollView, RefreshControl, Dimensions} from 'react-native';
-import {Button, IconButton, Appbar, List, Avatar, Card, Portal, Title, Paragraph, Caption, Modal} from "react-native-paper";
+import {Button, IconButton, Appbar, List, Avatar, Card, Portal, Title, Paragraph, Caption, Modal, Menu, Divider,
+Provider} from "react-native-paper";
 import {createMaterialBottomTabNavigator} from "react-navigation-material-bottom-tabs";
 import Map from "./Map";
 import Community from "./Community";
 import {Image} from "react-native-web";
 import {Stitch, RemoteMongoClient} from 'mongodb-stitch-react-native-sdk'
+import {StackActions, NavigationActions} from 'react-navigation'
+
+const height = Dimensions.get('window').height;
+const width = Dimensions.get('window').width;
 
 export default class Home extends React.Component{
 
@@ -112,7 +117,8 @@ export default class Home extends React.Component{
             favorites: undefined,
             refreshing: false,
             favRefreshing: false,
-            image: 'https://picsum.photos/500/300'
+            image: 'https://picsum.photos/500/300',
+            settingVisible: false,
         };
         this.loadRecents = this.loadRecents.bind(this);
     }
@@ -120,17 +126,21 @@ export default class Home extends React.Component{
     componentDidMount(){
         this.loadRecents();
         this.loadFavorites();
+        this.getUser();
     }
 
-    createCollection = () => {
-        const stitchAppClient = Stitch.defaultAppClient;
-        const mongoClient = stitchAppClient.getServiceClient(
-            RemoteMongoClient.factory,
-            'mongodb-atlas'
-        );
-        const db = mongoClient.db('cara')
-        db.createCollection('counters')
-    };
+    logOut(){
+        const stitchClient = Stitch.defaultAppClient;
+        this.setState({currentUserId: undefined})
+        stitchClient.auth.logout();
+        this.props.navigation.navigate({ routeName: 'Login' })
+    }
+
+    getUser(){
+        const stitchClient = Stitch.defaultAppClient
+        console.log(stitchClient.auth.user.profile.email)
+        this.setState({currentUserId: stitchClient.auth.user.profile.email})
+    }
 
     onRefresh = () => {
         this.setState({refreshing: true});
@@ -346,7 +356,7 @@ export default class Home extends React.Component{
                                     <Card.Cover source={{uri: itemInfo.image}}/>
                                     <Paragraph>{itemInfo.description}</Paragraph>
                                     <Button icon={'star'} mode={'contained'} onPress={() => this.addFavorite(itemInfo)}
-                                    style={{marginHorizontal: 60, marginVertical: 20}} color={'#E6C419'}>Favorite</Button>
+                                    style={{marginHorizontal: 60, marginVertical: 20}} color={'#000556'}>Favorite</Button>
                                 </Card.Content>
                             </Card>
                         </Modal>)
@@ -382,7 +392,9 @@ export default class Home extends React.Component{
                                                            color={'#E44953'}
                                                            />}
                                onPress={() => this._showModal(itemInfo._id)}
-                               style={styles.listItem}/>
+                               style={styles.listItem}
+                    titleStyle={{fontWeight: 'bold'}}
+                    descriptionStyle={{fontStyle: 'italic'}}/>
                 )
             })
         }
@@ -397,11 +409,13 @@ export default class Home extends React.Component{
                 return(
                     <List.Item key={favInfo._id} title={favInfo.title} description={favInfo.description}
                     left={props => <IconButton {...props} icon={'star'} onPress={() => console.log('Map Press')}
-                    color={'black'} size={30}/>}
+                    color={'white'} size={30}/>}
                     right={props => <IconButton {...props} icon={'delete'} onPress={() => this.deleteFavorite(favInfo._id)}
                                                 size={30} color={'#E44953'}/>}
                     onPress={() => console.log('Fav press')}
-                    style={styles.favItem}/> //need to implement
+                    style={styles.favItem}
+                    titleStyle={{color: 'white', fontWeight: 'bold'}}
+                    descriptionStyle={{color: 'white', fontStyle: 'italic'}}/> //need to implement
                 )
             })
         }
@@ -459,21 +473,28 @@ export default class Home extends React.Component{
         });
     }
 
+    openSetting = () => this.setState({settingVisible: true});
+
+    closeSetting = () => this.setState({settingVisible: false});
+
+
+
 
     render(){
         return(
+            <Provider>
             <View style={styles.container}>
-                <Appbar style={{paddingTop: 50, paddingBottom: 30, marginBottom: 10, flexDirection: 'row', alignContent: 'center', backgroundColor: 'white'}}>
-                    <View style={{flex: 1}}>
-                    <Avatar.Text size={47} label={'MR'} style={{backgroundColor: 'lightgrey'}} labelStyle={{fontSize: 20, fontWeight: 'bold'}}/>
-                    </View>
-                    <Appbar.Action icon='settings' onPress={() => console.log('Settings press')} color={'black'}/>
-                </Appbar>
+                <Appbar.Header style={{ marginBottom: 10, flexDirection: 'row', alignContent: 'center', backgroundColor: 'white'}}>
+                    <Appbar.Action icon='menu' onPress={this.openSetting} color={'black'}/>
+                    <Appbar.Content title={'Home'} titleStyle={{fontSize: 20,}} subtitle={this.state.currentUserId}/>
+                    <Appbar.Action icon={'account'} onPress={() =>console.log('Account press')} style={{backgroundColor: 'whitesmoke', marginRight: 20}} size={30}/>
+
+                </Appbar.Header>
 
                 <View style={styles.buttonContainer}>
-                    <Button style={styles.listSelecters} icon={'star'} mode={'contained'} labelStyle={styles.selecterText} color={'#E6C419'} onPress={() => this.renderFavorites()}>Favorites</Button>
+                    <Button style={styles.listSelecters} icon={'star'} mode={'contained'} labelStyle={styles.selecterText} color={'#000556'} onPress={() => this.renderFavorites()}>Favorites</Button>
                     <Button style={styles.listSelecters} icon={'history'} mode={'contained'} labelStyle={styles.selecterText} color={'lightgrey'} onPress={() => this.renderRecent()}>Recent</Button>
-                    <Button style={styles.listSelecters} icon={'alert'} mode={'contained'} labelStyle={styles.selecterText} color={'#DE606D'} onPress={() => this.renderAlerts()}>Alerts</Button>
+                    <Button style={styles.listSelecters} icon={'alert'} mode={'contained'} labelStyle={styles.selecterText} color={'#7609FF'} onPress={() => this.renderAlerts()}>Alerts</Button>
                 </View>
                 {/*Shows Alerts*/}
                 {this.state.showAlerts ?
@@ -500,7 +521,26 @@ export default class Home extends React.Component{
 
             {/*Renders Modal*/}
                 {this.renderModal()}
+                <Portal>
+                     <Modal visible={this.state.settingVisible} onDismiss={this.closeSetting}>
+                    <View style={{backgroundColor: 'white', borderRadius: 10,}}>
+                        <List.Item title={'Account'} onPress={() => console.log('Logout')}
+                        left={props => <IconButton {...props} icon={'account'}/>}/>
+                        <List.Item title={'Advanced'} onPress={() => console.log('Logout')}
+                        left={props => <IconButton {...props} icon={'settings'}/>}/>
+                        <List.Item title={'Info'} onPress={() => console.log('Logout')}
+                        left={props => <IconButton {...props} icon={'information'}/>}/>
+                        <List.Item title={'Logout'} onPress={() => this.logOut()}
+                        left={props => <IconButton {...props} icon={'logout'}/>}/>
+                    </View>
+
+                    </Modal>
+                </Portal>
+
             </View>
+
+                </Provider>
+
 
         )
     }
@@ -521,7 +561,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
     favItem:{
-        backgroundColor: '#E6C419',
+        backgroundColor: '#000556',
         margin: 10,
         borderRadius: 5,
     },

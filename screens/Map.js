@@ -1,9 +1,11 @@
 import React from 'react';
-import {View, Text, StyleSheet, Dimensions, RefreshControl, ScrollView, TouchableHighlight} from 'react-native';
-import {Button, IconButton, Appbar, Modal, Searchbar, Avatar, Menu, Provider, Card, Paragraph, Dialog, Caption, List} from "react-native-paper";
+import {View, Text, StyleSheet, Dimensions, RefreshControl, ScrollView, TouchableHighlight, Picker, TouchableOpacity} from 'react-native';
+import {Button, IconButton, Appbar, Modal, Searchbar, Avatar, Menu, Provider, Card, Paragraph, Dialog, Caption, Divider, List
+, Drawer} from "react-native-paper";
 import MapView, {Callout, Polyline, ProviderPropType, Marker} from "react-native-maps";
 import data from '/home/mrue/senior_project/cara/assets/route'
 import {Stitch, RemoteMongoClient} from 'mongodb-stitch-react-native-sdk';
+import MenuDrawer from 'react-native-side-drawer'
 
 import constructionIcon from '../assets/construction.png'
 
@@ -15,7 +17,10 @@ export default class Map extends React.Component{
     constructor(props) {
         super(props);
         this.state = {
+            currentUserId: undefined,
+            color: ['#EE5B5C', '#6670CC', '#D9E54D', '#53E052'],
             markers: undefined,
+            buildings: null,
             searchQuery: '',
             favoritesVisible: false,
             favoritesList: undefined,
@@ -28,7 +33,25 @@ export default class Map extends React.Component{
                     latitude: 42,
                     longitude: -76
                 }
-            }
+            },
+            startBuilding: 'Start',
+            endBuilding: 'End',
+            startModalVisible: false,
+            endModalVisible: false,
+            startPosition:{
+                latitude: null,
+                longitude: null
+            },
+            endPosition:{
+                latitude: null,
+                longitude: null,
+            },
+            icon: 'pin',
+            description: '',
+            image: '',
+            favorite: false,
+            title: '',
+            drawerState: false,
 
         }
     }
@@ -36,23 +59,73 @@ export default class Map extends React.Component{
     componentDidMount(){
         this.loadFavorites();
         this.loadMarker();
+        this.loadBuildings();
+        this.getUser();
         navigator.geolocation.getCurrentPosition(position => {
 
-            console.log(this.state.location.coords.latitude);
-
             this.setState({location: position})
-
-            console.log('State is: ' + this.state.location.coords.latitude)
         },
             (error) => alert(JSON.stringify(error)),
             {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000});
+    };
+
+    toggleDrawer = () =>{
+        console.log('toggled drawer')
+        this.setState({drawerState: !this.state.drawerState});
+    };
+
+    handleRouteSubmit = () =>{  // need to implement a simple client grabber function for production this works for now
+        Keyboard.dismiss();
+        const stitchAppClient = Stitch.defaultAppClient;
+        const mongoClient = stitchAppClient.getServiceClient(
+            RemoteMongoClient.factory,
+            'mongodb-atlas'
+        )
+
+        const db = mongoClient.db('cara');
+        const routes = db.collection('routes');
+        routes.insertOne({
+            userId: stitchAppClient.auth.user.id,
+            title: this.state.startBuilding + ' -> ' + this.state.endBuilding,
+            description: this.state.description,
+            icon: this.state.icon,
+            color: this.determineColor(),
+            route: this.state.route,
+            startLocation: this.state.startPosition,
+            endLocation: this.state.endPosition,
+            favorite: this.state.favorite,
+            recent: true,
+            date: new Date(),
+            image: this.generateImage(),
+            type: 'default',
+        })
+            .then(() =>{
+                this.setState({title: '', description: ''})
+                console.log('route created successfully')
+            })
+            .catch(err =>{
+                console.warn(err);
+            });
+    };
+
+    generateImage = () => {
+        let imageURL = 'https://picsum.photos/id/' + this.getRandomInt(0, 1000) + '/500/300';
+        console.log(imageURL)
+        this.setState({image: imageURL})
+        console.log('Hit Image Generator')
+        return imageURL;
+    }
+
+    determineColor(){
+        var randNum = Math.floor(Math.random() * 4);
+        return this.state.color[randNum]
     };
 
     remountMap = () =>{
         this.setState(({reloadValue}) => ({
             reloadValue: reloadValue + 1
         }));
-    }
+    };
 
     showModal = (modalId) => {
         this.setState({modalVisible: true, favoriteId: modalId});
@@ -125,8 +198,29 @@ export default class Map extends React.Component{
             })
     };
 
+    loadBuildings = () => {
+        const stitchAppClient = Stitch.defaultAppClient
+        const mongoClient = stitchAppClient.getServiceClient(
+            RemoteMongoClient.factory, 'mongodb-atlas'
+        );
+
+        const db = mongoClient.db('cara');
+        const buildings = db.collection('buildings');
+        console.log('loading buildings')
+        buildings.find({loaded: true})
+            .asArray()
+            .then(docs =>{
+                this.setState({buildings: docs})
+                console.log('loaded all buildings')
+                // console.log(this.state.buildings)
+            }).catch(err =>{
+                console.warn(err)
+        })
+    }
+
     openFavorites = () =>{
         this.setState({favoritesVisible: true});
+        this.toggleDrawer();
         this.loadFavorites();
     };
 
@@ -185,8 +279,101 @@ export default class Map extends React.Component{
 
     };
 
+    renderStartPosition = (name, lat, lon) =>{
+        this.setState({startBuilding: name,
+        });
+        console.log(lat);
+        console.log(lon);
+        this.setState({startPosition:{
+            latitude: lat, longitude: lon
+            }})
+
+    };
+
+    renderEndPosition = (name, lat, lon) =>{
+        this.setState({endBuilding: name})
+        console.log(lat);
+        console.log(lon);
+        this.setState({
+            endPosition:{
+                latitude: lat, longitude: lon
+            }
+        })
+    }
+
+    renderStartMarkers = () =>{
+        if(this.state.startPosition.latitude !== null){
+            return(
+                <Marker title={this.state.startBuilding} pinColor={'#00C256'}
+                coordinate={this.state.startPosition}/>
+            )
+        }
+    };
+
+    renderEndMarkers = () =>{
+        if(this.state.endPosition.latitude !== null){
+            return(
+                <Marker title={this.state.endBuilding} pinColor={'#C2006D'}
+                coordinate={this.state.endPosition}/>
+            )
+        }
+    }
+
+    renderStartBuilding = () =>{
+        if(this.state.startModalVisible && this.state.buildings !== null){
+            return this.state.buildings.map((buildingInfo) =>{
+                return buildingInfo.building.buildings.map((building)=>{
+                    return(
+                        <List.Item key={building.building} title={building.building}
+                        left={props => <List.Icon {...props} icon={'domain'} color={'black'} size={40}/>}
+                        onPress={() => {this.renderStartPosition(building.building, building.latitude, building.longitude); this.closeStartBuilding() }} style={{paddingHorizontal: 30}}/>
+                    )
+                })
+
+            })
+        }
+    };
+
+    renderEndBuilding = () =>{
+        if(this.state.endModalVisible && this.state.buildings !== null){
+            return this.state.buildings.map((buildingInfo) =>{
+                return buildingInfo.building.buildings.map((building)=>{
+                    return(
+                        <List.Item key={building.building} title={building.building}
+                        left={props => <List.Icon {...props} icon={'domain'} color={'black'} size={40}/>}
+                        onPress={() => {this.renderEndPosition(building.building, building.latitude, building.longitude); this.closeEndBuilding() }} style={{paddingHorizontal: 30}}/>
+                    )
+                })
+
+            })
+        }
+    };
+
+    openEndBuilding = () =>{
+        this.setState({endModalVisible: true})
+    };
+
+    closeEndBuilding = () =>{
+        this.setState({endModalVisible: false})
+    }
+
+    openStartBuilding = () =>{
+        this.setState({startModalVisible: true})
+    };
+
+    closeStartBuilding = () =>{
+        this.setState({startModalVisible: false})
+    };
+
     goToFeatures(){
+        this.toggleDrawer();
         this.props.navigation.navigate('FeatureMap')
+    }
+
+    getUser(){
+        const stitchClient = Stitch.defaultAppClient
+        console.log(stitchClient.auth.user.profile.email)
+        this.setState({currentUserId: stitchClient.auth.user.profile.email})
     }
 
     render(){
@@ -197,6 +384,31 @@ export default class Map extends React.Component{
 
 
             <View style={styles.container}>
+                <MenuDrawer
+                    open={this.state.drawerState}
+                    drawerContent={<View style={{flexDirection: 'row'}}>
+                        <ScrollView style={{paddingVertical: height/20 ,backgroundColor: 'white', width: width/2.4, height: height}}>
+                        <Button mode={'contained'} onPress={()=> this.goToFeatures()} color={'#000556'} style={styles.bottomButtons} icon={'plus'}>
+                            Add Feature</Button>
+                        <Button mode={'contained'} onPress={this.openFavorites} color={'whitesmoke'} icon={'star'} style={styles.bottomButtons}>Favorites</Button>
+                        <Divider style={{marginTop: 15}}/>
+                        <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 1</Button>
+                            <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 2</Button>
+                            <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 3</Button>
+                            <Divider style={{marginTop: 15}}/>
+                            <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 1</Button>
+                        </ScrollView>
+                        <View style={{width: width/1.8, height: height}}>
+                            <TouchableOpacity style={{width: width/1.8, height: height}} onPress={this.toggleDrawer}/>
+                        </View>
+                    </View>
+                        }
+                    drawerPercentage={100}
+                    animationTime={250}
+                    overlay={true}
+                    opacity={0.5}>
+
+
 
             <MapView
                 key={this.state.reloadValue}
@@ -213,26 +425,51 @@ export default class Map extends React.Component{
             showsUserLocation={true}
             followsUserLocation={true}>
                 {this.renderMarkers()}
-                <Polyline coordinates={this.state.route}
-                          strokeColor={'#F00000'}
-                          strokeWidth={4}/>
+                {this.renderStartMarkers()}
+                {this.renderEndMarkers()}
+                {/*<Polyline coordinates={this.state.route}*/}
+                {/*          strokeColor={'#F00000'}*/}
+                {/*          strokeWidth={4}/>*/}
             </MapView>
+
                 <View style={styles.interactionLayer}>
-                    <Searchbar placeholder={'Find a route'} onChangeText={search => {this.setState({searchQuery: search});}} value={this.state.searchQuery}/>
+                    <Appbar.Header style={{ backgroundColor: 'white', flexDirection: 'row', alignContent: 'center'}}>
+                    <Appbar.Action icon={'menu'} onPress={this.toggleDrawer}/>
+                    <Appbar.Content title={'Map'} subtitle={this.state.currentUserId}/>
+                </Appbar.Header>
+                    <View style={{flexDirection: 'row', backgroundColor: 'transparent', marginHorizontal: 10, marginTop: 10}}>
+                        <Button mode={'contained'} onPress={this.openStartBuilding} color={'#00C256'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.startBuilding}</Button>
+                        <IconButton mode={'contained'} onPress={this.toggleDrawer} icon={'crosshairs-gps'} style={{width: 50, backgroundColor: 'white', marginHorizontal: 10, height: 50}} color={'black'}/>
+                        <Button mode={'contained'} onPress={this.openEndBuilding} color={'#C2006D'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.endBuilding}</Button>
+                        </View>
                     <View style={styles.buttonContainer}>
-                        <Button mode={'contained'} onPress={this.openFavorites} color={'white'} style={styles.bottomButtons}
-                        icon={'star'}>
-                            Favorites</Button>
 
 
 
 
-                        <Button mode={'contained'} onPress={()=> this.goToFeatures()} color={'#EE5B5C'} style={styles.bottomButtons}
-                            icon={'plus'}>
-                            Add Feature</Button>
+
                     </View>
 
                 </View>
+                <Dialog
+                visible={this.state.startModalVisible}
+                onDismiss={this.closeStartBuilding}
+                style={{marginTop: height/19, marginHorizontal: width/8, height: height/1.4, width: width/1.3, paddingVertical: 10}}>
+                    <Dialog.Title>Start Locations</Dialog.Title>
+                    <ScrollView>
+                            {this.renderStartBuilding()}
+                    </ScrollView>
+
+                </Dialog>
+                <Dialog
+                visible={this.state.endModalVisible}
+                onDismiss={this.closeEndBuilding}
+                style={{marginTop: height/19, marginHorizontal: width/8, height: height/1.4, width: width/1.3, paddingVertical: 10}}>
+                    <Dialog.Title>End Locations</Dialog.Title>
+                    <ScrollView>
+                        {this.renderEndBuilding()}
+                    </ScrollView>
+                </Dialog>
                 <Dialog
                         visible={this.state.favoritesVisible}
                         onDismiss={this.closeFavorites}
@@ -244,9 +481,13 @@ export default class Map extends React.Component{
 
                         </Dialog>
                     {this.renderFavoriteModal()}
+                </MenuDrawer>
+
+
 
 
             </View>
+
 
                 </Provider>
         )
@@ -266,20 +507,27 @@ const styles = StyleSheet.create({
   map: {
       ...StyleSheet.absoluteFillObject,
   },
+    buildingButtons:{
+      height: height/20,
+        width: width/3,
+        flex: 1,
+    },
     interactionLayer:{
       flexDirection: 'column',
-        marginVertical: 30,
         backgroundColor: 'transparent',
         justifyContent: 'flex-end'
     },
     bottomButtons:{
       marginHorizontal: 10,
         height: height/20,
+        flex: 1,
+        marginTop: 15,
     },
     buttonContainer:{
       flexDirection: 'row',
         marginVertical: 10,
-        justifyContent: 'center'
+        justifyContent: 'center',
+        marginHorizontal: 20,
     },
     topContainer:{
       flexDirection: 'column',

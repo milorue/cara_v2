@@ -2,20 +2,60 @@ import React from 'react';
 import {View, Text, StyleSheet, Image} from 'react-native';
 import logo from '/home/mrue/senior_project/cara/assets/logo.png'
 import {TextInput, Caption, Button} from "react-native-paper";
+import {AnonymousCredential, Stitch, UserPasswordCredential} from "mongodb-stitch-react-native-sdk"
+import appCredential from "../credentials";
 
 export default class Login extends React.Component{
 
     state = {
         email: '',
         password: '',
+        currentUserId: undefined,
+        client: undefined,
+        isLoadingComplete: false,
     };
 
+    componentDidMount(){
+        if(this.client === undefined){
+            this.loadClient();
+        }
+
+    }
+
+
+    loadClient(){
+        Stitch.initializeDefaultAppClient(appCredential).then(client =>{
+            this.setState({client: client});
+            console.log('Hit client')
+        })
+
+    }
+
     signIn(){
-        this.props.navigation.navigate('Loading')
+        this.state.client.auth.loginWithCredential(new UserPasswordCredential(this.state.email, this.state.password))
+            .then((user) => {
+                console.log('Logged in as ' + user.profile.email + ' with id: ' + user.id)
+                 this.props.navigation.navigate('Home')
+            })
+            .catch(err =>{
+                console.log('Failed to Log In: ' + err)
+            })
     }
 
     goHome(){
-        this.props.navigation.navigate('Home')
+        this.state.client.auth // authorizes anon user
+              .loginWithCredential(new AnonymousCredential())
+              .then(user => {
+                  console.log('Log In Success as user: ' + user.id );
+                  this.setState({currentUserId: user.id});
+                  this.setState({currentUserId: this.state.client.auth.user.id})
+                  this.props.navigation.navigate('Home')
+              })
+              .catch(err => {
+                  console.log('Failed to Log In: ' + err);
+                  this.setState({currentUserId: undefined})
+              })
+
     }
 
     signUp(){

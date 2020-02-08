@@ -52,7 +52,7 @@ export default class ConceptHome extends React.Component{
         console.log('Instantiated Client')
         if (this.state.text !== ""){
             routes.insertOne({
-                id: this.state.id,
+                userId: stitchAppClient.auth.user.id,
                 title: this.state.title,
                 description: this.state.description,
                 icon: this.state.icon,

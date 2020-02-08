@@ -1,7 +1,8 @@
 import React from 'react';
 import {View, Text, StyleSheet, Image, ScrollView} from 'react-native'
 import logo from '/home/mrue/senior_project/cara/assets/logo.png'
-import {TextInput, Caption, Button} from "react-native-paper";
+import {TextInput, Caption, Button, HelperText} from "react-native-paper";
+import {Stitch, UserPasswordCredential, UserPasswordAuthProviderClient} from 'mongodb-stitch-react-native-sdk'
 
 export default class Signup extends React.Component{
 
@@ -12,8 +13,30 @@ export default class Signup extends React.Component{
         passwordConfirm: '',
         firstName: '',
         lastName: '',
+        client: undefined,
 
     }
+
+    componentDidMount(){
+        this.loadClient();
+    }
+
+    loadClient(){
+        const emailPassClient = Stitch.defaultAppClient.auth.getProviderClient(UserPasswordAuthProviderClient.factory); // creates environment for user registration
+        this.setState({client: emailPassClient})
+    }
+
+    signUp(){
+        if(this.state.email !== '' && this.state.password !== '' && this.state.firstName !== ''){ // need more robust testing but stitch handles it at the current moment so we good
+            if(this.state.password === this.state.passwordConfirm && this.state.email === this.state.emailConfirm)
+            this.state.client.registerWithEmail(this.state.email, this.state.password)
+                .then(() => console.log("Created Account with email: " + this.state.email))
+                .catch(err =>{
+                    console.error('Error registering user: ' + err)
+                })
+        }
+    }
+
 
     signIn(){
         this.props.navigation.navigate('Login') // this will need to request the server to authenticate
@@ -60,6 +83,12 @@ export default class Signup extends React.Component{
                     selectTextOnFocus={true}
                     selectionColor={'lightgrey'}/>
 
+                    <HelperText
+                    type={'error'}
+                    visible={!this.state.email.includes('@')}>
+                        Email address is invalid
+                    </HelperText>
+
                     <Caption style={{color: '#4D4CB3'}}>Confirm email</Caption>
                     <TextInput
                     label={'Confirm email'}
@@ -70,6 +99,12 @@ export default class Signup extends React.Component{
                     dense={true}
                     selectTextOnFocus={true}
                     selectionColor={'lightgrey'}/>
+
+                    <HelperText
+                    type={'error'}
+                    visible={!this.state.email.includes('@')}>
+                        Email address is invalid
+                    </HelperText>
 
                     <Caption style={{color: '#4D4CB3'}}>Password</Caption>
                     <TextInput
@@ -98,7 +133,7 @@ export default class Signup extends React.Component{
                     <Button
                     icon={'check'}
                     mode={'contained'}
-                    onPress={() => console.log('Signed Up')}
+                    onPress={() => this.signUp()}
                     style={styles.signupButton}>Create Account</Button>
 
                     <Caption style={{marginTop: 10}}>Already have an account?</Caption>
