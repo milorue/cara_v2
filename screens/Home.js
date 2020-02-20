@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet, ScrollView, RefreshControl, Dimensions} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, RefreshControl, Dimensions, TouchableOpacity} from 'react-native';
 import {Button, IconButton, Appbar, List, Avatar, Card, Portal, Title, Paragraph, Caption, Modal, Menu, Divider,
 Provider} from "react-native-paper";
 import {createMaterialBottomTabNavigator} from "react-navigation-material-bottom-tabs";
@@ -8,6 +8,7 @@ import Community from "./Community";
 import {Image} from "react-native-web";
 import {Stitch, RemoteMongoClient} from 'mongodb-stitch-react-native-sdk'
 import {StackActions, NavigationActions} from 'react-navigation'
+import MenuDrawer from 'react-native-side-drawer'
 
 const height = Dimensions.get('window').height;
 const width = Dimensions.get('window').width;
@@ -22,68 +23,6 @@ export default class Home extends React.Component{
             showFavorites: false,
             showRecent: false,
             showAlerts: true,
-            itemArr: [
-                {
-                    title: 'Williams Hall -> Textor Hall',
-                    description: 'Be aware of construction in the the Business/Textor parking lot',
-                    icon: 'pin',
-                    color: 'red',
-                    id: 0,
-                    visible: false,
-                    image: "https://picsum.photos/500/300",
-
-                },
-                {
-                    title: 'Phillips Hall ->  Peggy Ryan Williams',
-                    description: 'Be aware of construction in the the Business/Textor parking lot',
-                    icon: 'pin',
-                    color: 'blue',
-                    id: 1,
-                    visible: false,
-                    image: "https://picsum.photos/500/300",
-
-                },
-                {
-                    title: 'A&E Center ->  Campus Center',
-                    description: 'Be aware of construction in the the Business/Textor parking lot',
-                    icon: 'pin',
-                    color: 'blue',
-                    id: 2,
-                    visible: false,
-                    image: "https://picsum.photos/500/300",
-
-                },
-                {
-                    title: 'Williams Hall ->  Peggy Ryan Williams',
-                    description: 'Be aware of construction in the the Business/Textor parking lot',
-                    icon: 'pin',
-                    color: 'blue',
-                    id: 3,
-                    visible: false,
-                    image: "https://picsum.photos/500/300",
-
-                },
-                {
-                    title: 'Phillips Hall ->  Williams Hall',
-                    description: 'Be aware of construction in the the Business/Textor parking lot',
-                    icon: 'pin',
-                    color: 'blue',
-                    id: 4,
-                    visible: false,
-                    image: "https://picsum.photos/500/300",
-
-                },
-                {
-                    title: 'Textor Hall ->  Friends Hall',
-                    description: 'Be aware of construction in the the Business/Textor parking lot',
-                    icon: 'pin',
-                    color: 'blue',
-                    id: 5,
-                    visible: false,
-                    image: "https://picsum.photos/500/300",
-
-                },
-            ],
             alertsArr: [
                 {
                     title: "Summer '20 Construction",
@@ -119,6 +58,7 @@ export default class Home extends React.Component{
             favRefreshing: false,
             image: 'https://picsum.photos/500/300',
             settingVisible: false,
+
         };
         this.loadRecents = this.loadRecents.bind(this);
     }
@@ -484,6 +424,29 @@ export default class Home extends React.Component{
         return(
             <Provider>
             <View style={styles.container}>
+                <MenuDrawer
+                open={this.state.settingVisible}
+                drawerContent={<View style={{flexDirection: 'row',}}>
+                    <ScrollView style={{backgroundColor: 'white', width: width/2.4, height: height}}>
+                        <Appbar.Header style={{backgroundColor: 'white', flexDirection: 'row', alignContent: 'center', marginBottom: 10}}>
+                            <Appbar.Content subtitle={this.state.currentUserId}/>
+                        </Appbar.Header>
+                        <Button mode={'contained'} dense={true} onPress={() =>console.log('Setting Press')} style={{margin: 10}} color={'#000556'}>Settings</Button>
+                        <Button mode={'contained'} dense={true} onPress={() =>console.log('Trips Press')} style={{margin: 10}} color={'lightgrey'}>Trips</Button>
+                        <Button mode={'contained'} dense={true} onPress={() =>this.logOut()} style={{margin: 10}} color={'#A9AEFF'}>Log Out</Button>
+
+                    </ScrollView>
+                    <View style={{width: width/1.8, height: height}}>
+                        <TouchableOpacity style={{width: width/1.8, height: height}} onPress={this.closeSetting}/>
+                    </View>
+
+                </View>}
+                drawerPercentage={100}
+                    animationTime={250}
+                    overlay={true}
+                    opacity={0.5}>
+
+
                 <Appbar.Header style={{ marginBottom: 10, flexDirection: 'row', alignContent: 'center', backgroundColor: 'white'}}>
                     <Appbar.Action icon='menu' onPress={this.openSetting} color={'black'}/>
                     <Appbar.Content title={'Home'} titleStyle={{fontSize: 20,}} subtitle={this.state.currentUserId}/>
@@ -521,21 +484,7 @@ export default class Home extends React.Component{
 
             {/*Renders Modal*/}
                 {this.renderModal()}
-                <Portal>
-                     <Modal visible={this.state.settingVisible} onDismiss={this.closeSetting}>
-                    <View style={{backgroundColor: 'white', borderRadius: 10,}}>
-                        <List.Item title={'Account'} onPress={() => console.log('Logout')}
-                        left={props => <IconButton {...props} icon={'account'}/>}/>
-                        <List.Item title={'Advanced'} onPress={() => console.log('Logout')}
-                        left={props => <IconButton {...props} icon={'settings'}/>}/>
-                        <List.Item title={'Info'} onPress={() => console.log('Logout')}
-                        left={props => <IconButton {...props} icon={'information'}/>}/>
-                        <List.Item title={'Logout'} onPress={() => this.logOut()}
-                        left={props => <IconButton {...props} icon={'logout'}/>}/>
-                    </View>
-
-                    </Modal>
-                </Portal>
+                    </MenuDrawer>
 
             </View>
 
@@ -553,6 +502,7 @@ const styles = StyleSheet.create({
     avatarContainer:{
         flexDirection: 'column',
         paddingTop: 10,
+        marginBottom: height/10,
         height: Dimensions.get('window').height - Dimensions.get('window').height/3.9
     },
     listItem:{

@@ -6,6 +6,8 @@ import MapView, {Callout, Polyline, ProviderPropType, Marker} from "react-native
 import data from '/home/mrue/senior_project/cara/assets/route'
 import {Stitch, RemoteMongoClient} from 'mongodb-stitch-react-native-sdk';
 import MenuDrawer from 'react-native-side-drawer'
+import MapViewDirections from "react-native-maps-directions";
+import googleKey from "../assets/apiKey";
 
 import constructionIcon from '../assets/construction.png'
 
@@ -68,6 +70,19 @@ export default class Map extends React.Component{
             (error) => alert(JSON.stringify(error)),
             {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000});
     };
+
+    renderRoute = () =>{
+        if(this.state.endPosition.latitude != null){
+            return(
+            <MapViewDirections apikey={googleKey}
+            origin={this.state.startPosition}
+            destination={this.state.endPosition}
+            strokeWidth={4}
+            strokeColor={'red'}
+            mode={'WALKING'}/>
+            )
+        }
+    }
 
     toggleDrawer = () =>{
         console.log('toggled drawer')
@@ -427,13 +442,14 @@ export default class Map extends React.Component{
                 {this.renderMarkers()}
                 {this.renderStartMarkers()}
                 {this.renderEndMarkers()}
+                {this.renderRoute()}
                 {/*<Polyline coordinates={this.state.route}*/}
                 {/*          strokeColor={'#F00000'}*/}
                 {/*          strokeWidth={4}/>*/}
             </MapView>
 
                 <View style={styles.interactionLayer}>
-                    <Appbar.Header style={{ backgroundColor: 'white', flexDirection: 'row', alignContent: 'center'}}>
+                    <Appbar.Header style={{ backgroundColor: 'white', flexDirection: 'row', alignContent: 'center', marginBottom: 10}}>
                     <Appbar.Action icon={'menu'} onPress={this.toggleDrawer}/>
                     <Appbar.Content title={'Map'} subtitle={this.state.currentUserId}/>
                 </Appbar.Header>

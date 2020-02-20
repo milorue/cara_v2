@@ -30,7 +30,10 @@ export default class Signup extends React.Component{
         if(this.state.email !== '' && this.state.password !== '' && this.state.firstName !== ''){ // need more robust testing but stitch handles it at the current moment so we good
             if(this.state.password === this.state.passwordConfirm && this.state.email === this.state.emailConfirm)
             this.state.client.registerWithEmail(this.state.email, this.state.password)
-                .then(() => console.log("Created Account with email: " + this.state.email))
+                .then(() => {
+                    console.log("Created Account with email: " + this.state.email)
+                    this.signIn()
+                })
                 .catch(err =>{
                     console.error('Error registering user: ' + err)
                 })
