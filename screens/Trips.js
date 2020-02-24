@@ -17,7 +17,35 @@ export default class Trips extends React.Component{
     constructor(props){
         super(props);
         this.state={
+            showFavorites: false,
+            showRecent: true,
+            client: undefined,
+            favorites: undefined,
+            recents: undefined,
+            refreshing: false,
+            currentUser: undefined,
 
         }
+    }
+
+    componentDidMount(){
+        this.getClient();
+
+    }
+
+    getClient(){
+        const stitchClient = Stitch.defaultAppClient
+        this.setState({client: stitchClient})
+    }
+
+    loadData(){
+        const mongoClient = this.state.client.getServiceClient(
+            RemoteMongoClient.factory,
+            'mongodb-atlas'
+        );
+
+        const db = mongoClient.db('cara');
+        const recents = db.collection('routes')
+        const favorites = db.collection('favorites')
     }
 }

@@ -79,7 +79,12 @@ export default class Map extends React.Component{
             destination={this.state.endPosition}
             strokeWidth={4}
             strokeColor={'red'}
-            mode={'WALKING'}/>
+            mode={'WALKING'}
+            onReady={result => {
+              console.log('Duration: ' + result.distance + ' km');
+              console.log('Duration:' + result.duration + ' min.');
+                console.log('Coordinates: ' + result.coordinates)
+            }}/>
             )
         }
     }
@@ -391,6 +396,13 @@ export default class Map extends React.Component{
         this.setState({currentUserId: stitchClient.auth.user.profile.email})
     }
 
+    logOut(){
+        const stitchClient = Stitch.defaultAppClient;
+        this.setState({currentUserId: undefined})
+        stitchClient.auth.logout();
+        this.props.navigation.navigate({ routeName: 'Login' })
+    }
+
     render(){
 
         return(
@@ -407,11 +419,9 @@ export default class Map extends React.Component{
                             Add Feature</Button>
                         <Button mode={'contained'} onPress={this.openFavorites} color={'whitesmoke'} icon={'star'} style={styles.bottomButtons}>Favorites</Button>
                         <Divider style={{marginTop: 15}}/>
-                        <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 1</Button>
-                            <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 2</Button>
-                            <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 3</Button>
+                        <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons} color={'lightgrey'}>Filters</Button>
                             <Divider style={{marginTop: 15}}/>
-                            <Button mode={'contained'} onPress={() => console.log('Test Button')} style={styles.bottomButtons}>Item 1</Button>
+                            <Button mode={'contained'} onPress={() => this.logOut()} style={styles.bottomButtons} color={'#A9AEFF'}>Logout</Button>
                         </ScrollView>
                         <View style={{width: width/1.8, height: height}}>
                             <TouchableOpacity style={{width: width/1.8, height: height}} onPress={this.toggleDrawer}/>
@@ -432,8 +442,8 @@ export default class Map extends React.Component{
                     {
                         latitude: this.state.location.coords.latitude,
                         longitude: this.state.location.coords.longitude,
-                        latitudeDelta: 0.0401,
-                        longitudeDelta: 0.0101,
+                        latitudeDelta: 0.0061,
+                        longitudeDelta: 0.0061,
                     }
                 }
                 style={styles.map}
@@ -452,10 +462,10 @@ export default class Map extends React.Component{
                     <Appbar.Header style={{ backgroundColor: 'white', flexDirection: 'row', alignContent: 'center', marginBottom: 10}}>
                     <Appbar.Action icon={'menu'} onPress={this.toggleDrawer}/>
                     <Appbar.Content title={'Map'} subtitle={this.state.currentUserId}/>
+                    <Appbar.Action icon={'reload'} onPress={()=>this.componentDidMount()}/>
                 </Appbar.Header>
                     <View style={{flexDirection: 'row', backgroundColor: 'transparent', marginHorizontal: 10, marginTop: 10}}>
                         <Button mode={'contained'} onPress={this.openStartBuilding} color={'#00C256'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.startBuilding}</Button>
-                        <IconButton mode={'contained'} onPress={this.toggleDrawer} icon={'crosshairs-gps'} style={{width: 50, backgroundColor: 'white', marginHorizontal: 10, height: 50}} color={'black'}/>
                         <Button mode={'contained'} onPress={this.openEndBuilding} color={'#C2006D'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.endBuilding}</Button>
                         </View>
                     <View style={styles.buttonContainer}>
@@ -527,6 +537,7 @@ const styles = StyleSheet.create({
       height: height/20,
         width: width/3,
         flex: 1,
+        marginHorizontal: 10,
     },
     interactionLayer:{
       flexDirection: 'column',
