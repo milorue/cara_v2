@@ -12,6 +12,7 @@ import Community from "../screens/Community";
 import {IconButton} from "react-native-paper";
 import ConceptHome from "../screens/ConceptHome";
 import FeatureMap from "../screens/FeatureMap";
+import Trips from "../screens/Trips";
 
 
 const LoginStack = createStackNavigator({
@@ -74,6 +75,15 @@ const CommunityStack = createStackNavigator({
     }
 });
 
+const TripStack = createStackNavigator({
+    Trips:{
+        screen: Trips,
+        navigationOptions:{
+            headerShown: false,
+        }
+    }
+})
+
 const TabNavigator = createMaterialBottomTabNavigator({
     Home:{
         screen: HomeStack,
@@ -83,7 +93,19 @@ const TabNavigator = createMaterialBottomTabNavigator({
             icon={'home'}
             color={'black'}
             size={30}
-            style={{paddingBottom: 25}}/>
+            style={{paddingBottom: 15}}/>
+        }
+    },
+    Trips:{
+        screen: TripStack,
+        navigationOptions:{
+            tabBarColor: 'white',
+            tabBarIcon: <IconButton
+            icon={'map-marker-path'}
+            color={'black'}
+            size={30}
+            style={{paddingBottom: 15}}
+            />,
         }
     },
     Maps:{
@@ -94,7 +116,7 @@ const TabNavigator = createMaterialBottomTabNavigator({
             icon={'map'}
             color={'black'}
             size={30}
-            style={{paddingBottom: 25}}/>
+            style={{paddingBottom: 15}}/>
         }
     },
     Community:{
@@ -105,23 +127,12 @@ const TabNavigator = createMaterialBottomTabNavigator({
             icon={'account-multiple'}
             color={'black'}
             size={30}
-            style={{paddingBottom: 25}}
+            style={{paddingBottom: 15}}
             />,
             tabBarAccessibilityLabel: 'Community Tab'
         }
     },
-    Testing:{
-        screen: ConceptHome,
-        navigationOptions:{
-            tabBarColor: 'white',
-            tabBarIcon: <IconButton
-            icon={'alert'}
-            color={'black'}
-            size={30}
-            style={{paddingBottom: 25}}
-            />,
-        }
-    }
+
 
 },
     {
@@ -130,7 +141,7 @@ const TabNavigator = createMaterialBottomTabNavigator({
         initialRouteName: 'Home',
         activeColor: '#000000',
         inactiveColor: '#ffffff',
-        barStyle: {backgroundColor: '#65879A'}
+        barStyle: {backgroundColor: 'white', paddingBottom: 10}
     });
 
 export default createStackNavigator({

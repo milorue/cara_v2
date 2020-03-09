@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet, Image} from 'react-native';
 import logo from '/home/mrue/senior_project/cara/assets/logo.png'
-import {TextInput, Caption, Button} from "react-native-paper";
+import {TextInput, Caption, Button, Dialog, Portal, Paragraph, Provider} from "react-native-paper";
 import {AnonymousCredential, Stitch, UserPasswordCredential} from "mongodb-stitch-react-native-sdk"
 import appCredential from "../credentials";
 
@@ -13,6 +13,7 @@ export default class Login extends React.Component{
         currentUserId: undefined,
         client: undefined,
         isLoadingComplete: false,
+        signInError: false,
     };
 
     componentDidMount(){
@@ -31,6 +32,13 @@ export default class Login extends React.Component{
 
     }
 
+    showSignInError = () => {
+        this.setState({signInError: true});
+        console.log('Hit SignIn Error');
+    }
+
+    hideSignInError = () => this.setState({signInError: false});
+
     signIn(){
         this.state.client.auth.loginWithCredential(new UserPasswordCredential(this.state.email, this.state.password))
             .then((user) => {
@@ -39,6 +47,7 @@ export default class Login extends React.Component{
             })
             .catch(err =>{
                 console.log('Failed to Log In: ' + err)
+                this.showSignInError();
             })
     }
 
@@ -69,7 +78,11 @@ export default class Login extends React.Component{
 
     render(){
         return(
+            <Provider>
+            <Portal>
+
             <View style={styles.container}>
+
                 <View style={styles.logoContainer}>
                     <Image source={logo} style={{width: 150, height: 150}}/>
                 </View>
@@ -143,13 +156,25 @@ export default class Login extends React.Component{
                 </View>
 
             </View>
+                <Dialog visible={this.state.signInError}
+                    onDismiss={this.hideSignInError}>
+                        <Dialog.Title>Failed to Sign In</Dialog.Title>
+                        <Dialog.Content>
+                            <Paragraph>Username or password was incorrect</Paragraph>
+                        </Dialog.Content>
+                        <Dialog.Actions>
+                            <Button onPress={this.hideSignInError}>Ok</Button>
+                        </Dialog.Actions>
+                    </Dialog>
+                </Portal>
+            </Provider>
         )
     }
 }
 
 const styles = StyleSheet.create({
-    container:{
-        ...StyleSheet.absoluteFillObject,
+    container:{        ...StyleSheet.absoluteFillObject,
+
         flexDirection: 'column',
     },
     logoContainer: {

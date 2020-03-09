@@ -2,10 +2,6 @@ import React from 'react';
 import {View, Text, StyleSheet, ScrollView, RefreshControl, Dimensions, TouchableOpacity} from 'react-native';
 import {Button, IconButton, Appbar, List, Avatar, Card, Portal, Title, Paragraph, Caption, Modal, Menu, Divider,
 Provider} from "react-native-paper";
-import {createMaterialBottomTabNavigator} from "react-navigation-material-bottom-tabs";
-import Map from "./Map";
-import Community from "./Community";
-import {Image} from "react-native-web";
 import {Stitch, RemoteMongoClient} from 'mongodb-stitch-react-native-sdk'
 import {StackActions, NavigationActions} from 'react-navigation'
 import MenuDrawer from 'react-native-side-drawer'
@@ -21,7 +17,6 @@ export default class Home extends React.Component{
         this.state = {
             colors: ['#EE5B5C', '#6670CC', '#D9E54D', '#53E052'],
             showFavorites: false,
-            showRecent: false,
             showAlerts: true,
             alertsArr: [
                 {
@@ -52,7 +47,6 @@ export default class Home extends React.Component{
 
             currentUserId: undefined,
             client: undefined,
-            routes: undefined,
             favorites: undefined,
             refreshing: false,
             favRefreshing: false,
@@ -60,11 +54,9 @@ export default class Home extends React.Component{
             settingVisible: false,
 
         };
-        this.loadRecents = this.loadRecents.bind(this);
     }
 
     componentDidMount(){
-        this.loadRecents();
         this.loadFavorites();
         this.getUser();
     }
@@ -124,25 +116,6 @@ export default class Home extends React.Component{
             })
     };
 
-    loadRecents(){
-        const stitchAppClient = Stitch.defaultAppClient;
-        const mongoClient = stitchAppClient.getServiceClient(
-            RemoteMongoClient.factory,
-            'mongodb-atlas'
-        );
-
-        const db = mongoClient.db('cara');
-        const routes = db.collection('routes');
-        routes.find({recent: true}, {sort: {date: -1}})
-            .asArray()
-            .then(docs =>{
-                this.setState({routes: docs});
-            })
-            .catch(err => {
-                console.warn(err);
-            });
-    }
-
     loadFavorites(){
         const stitchAppClient = Stitch.defaultAppClient;
         const mongoClient = stitchAppClient.getServiceClient(
@@ -162,96 +135,12 @@ export default class Home extends React.Component{
             })
     };
 
-    addFavorite = (obj) =>{
-        const stitchAppClient = Stitch.defaultAppClient;
-        const mongoClient = stitchAppClient.getServiceClient(
-            RemoteMongoClient.factory,
-            'mongodb-atlas'
-        );
-
-        const db = mongoClient.db('cara');
-        const favorites = db.collection('favorites');
-
-        favorites.find({_id: obj._id})
-            .asArray()
-            .then(docs =>{
-
-                console.log(docs);
-
-                if(docs.length === 0){
-                    favorites.insertOne({
-                        _id: obj._id,
-                        title: obj.title,
-                        description: obj.description,
-                        icon: obj.icon,
-                        color: obj.color,
-                        visible: obj.visible,
-                        route: obj.route,
-                        favorite: true,
-                        recent: true,
-                        date: obj.date,
-                        image: obj.image,
-                        type: obj.type,
-                    })
-                    .then(()=>{
-                        console.log('Favorite ' + obj._id + ' added')
-                    })
-                    .catch(err =>{
-                        console.warn(err)
-                    })
-                }
-                else{
-                    console.log('Favorite ' + obj._id + ' was not added as its a duplicate')
-                }
-
-
-
-            })
-            .catch(err =>{
-                console.warn(err)
-
-        })
-
-
-    };
-
-
     _showModal = (modalId) => {
         this.setState({modalVisible: true, currentModalId: modalId})
     }
 
     _hideModal =
         () => this.setState({modalVisible: false})
-
-    determineColor(){
-        var randNum = Math.floor(Math.random() * 4);
-        return this.state.colors[randNum]
-    }
-
-    deleteRoute = (itemId) => {
-        const stitchAppClient = Stitch.defaultAppClient;
-        const mongoClient = stitchAppClient.getServiceClient(
-            RemoteMongoClient.factory,
-            'mongodb-atlas'
-        );
-        const db = mongoClient.db('cara') // loads db from stitch
-        const route = db.collection('routes');
-        route.deleteOne({_id: itemId
-        }).then(()=>{
-            route.find({recent: true}, {sort: {date: -1}})
-                .asArray().then(docs =>{
-                    this.setState({routes: docs});
-                    this.onRefresh();
-                    console.log(itemId + ' deleted');
-            })
-                .catch(err => {
-                    console.warn(err);
-                });
-            }
-        ).catch(err => {
-            console.warn(err);
-        });
-    };
 
     deleteFavorite = (favId) => {
         const stitchAppClient = Stitch.defaultAppClient;
@@ -276,86 +165,19 @@ export default class Home extends React.Component{
         })
     };
 
-
-
-    renderModal =() =>{
-
-            console.log(this.state.currentModalId);
-
-            if (this.state.modalVisible) {
-
-
-                let array = this.state.routes.map((itemInfo) => {
-                    return (
-                        <Modal key={itemInfo._id} visible={this.state.modalVisible} onDismiss={this._hideModal}
-                               style={{padding: 50}}>
-                            <Card style={{marginHorizontal: 10, marginVertical: 50}} elevation={10}>
-                                <Card.Title
-                                    title={itemInfo.title}/>
-                                <Card.Content>
-                                    <Card.Cover source={{uri: itemInfo.image}}/>
-                                    <Paragraph>{itemInfo.description}</Paragraph>
-                                    <Button icon={'star'} mode={'contained'} onPress={() => this.addFavorite(itemInfo)}
-                                    style={{marginHorizontal: 60, marginVertical: 20}} color={'#000556'}>Favorite</Button>
-                                </Card.Content>
-                            </Card>
-                        </Modal>)
-                });
-
-                for(let x = 0; x<this.state.routes.length; x++){
-                    if(this.state.routes[x]._id === this.state.currentModalId){
-                        return array[x]
-                    }
-                }
-
-
-
-                return array[0]
-                // return 0th if not found (fallback but needs improvement
-            }else{
-                return null
-            }
-    };
-
-
-
-    recents(){
-
-        if(this.state.showRecent) {
-
-            return this.state.routes.map((itemInfo) => {
-                return (
-                    <List.Item key={itemInfo._id} title={itemInfo.title} description={itemInfo.description}
-                               left={props => <IconButton {...props} icon={'camera-control'} onPress={() => console.log('Map Press')}
-                                                         color={'#14002E'} size={30}/>}
-                               right={props => <IconButton {...props} icon={'delete'} onPress={() => this.deleteRoute(itemInfo._id)} size={30}
-                                                           color={'#E44953'}
-                                                           />}
-                               onPress={() => this._showModal(itemInfo._id)}
-                               style={styles.listItem}
-                    titleStyle={{fontWeight: 'bold'}}
-                    descriptionStyle={{fontStyle: 'italic'}}/>
-                )
-            })
-        }
-        else{
-            return null
-        }
-    }
-
     favorites(){
         if(this.state.showFavorites){
             return this.state.favorites.map((favInfo) => {
                 return(
                     <List.Item key={favInfo._id} title={favInfo.title} description={favInfo.description}
                     left={props => <IconButton {...props} icon={'star'} onPress={() => console.log('Map Press')}
-                    color={'white'} size={30}/>}
+                    color={'black'} size={30}/>}
                     right={props => <IconButton {...props} icon={'delete'} onPress={() => this.deleteFavorite(favInfo._id)}
                                                 size={30} color={'#E44953'}/>}
                     onPress={() => console.log('Fav press')}
                     style={styles.favItem}
-                    titleStyle={{color: 'white', fontWeight: 'bold'}}
-                    descriptionStyle={{color: 'white', fontStyle: 'italic'}}/> //need to implement
+                    titleStyle={{color: 'black', fontWeight: 'bold'}}
+                    descriptionStyle={{color: 'black', fontStyle: 'italic'}}/> //need to implement
                 )
             })
         }
@@ -389,27 +211,10 @@ export default class Home extends React.Component{
 
     }
 
-    renderFavorites(){
-        this.setState({
-            showFavorites: true,
-            showAlerts: false,
-            showRecent: false,
-        });
-    }
-
-    renderRecent(){
-        this.setState({
-            showFavorites: false,
-            showAlerts: false,
-            showRecent: true,
-        });
-    }
-
     renderAlerts(){
         this.setState({
             showFavorites: false,
             showAlerts: true,
-            showRecent: false,
         });
     }
 
@@ -453,12 +258,7 @@ export default class Home extends React.Component{
                     <Appbar.Action icon={'account'} onPress={() =>console.log('Account press')} style={{backgroundColor: 'whitesmoke', marginRight: 20}} size={30}/>
 
                 </Appbar.Header>
-
-                <View style={styles.buttonContainer}>
-                    <Button style={styles.listSelecters} icon={'star'} mode={'contained'} labelStyle={styles.selecterText} color={'#000556'} onPress={() => this.renderFavorites()}>Favorites</Button>
-                    <Button style={styles.listSelecters} icon={'history'} mode={'contained'} labelStyle={styles.selecterText} color={'lightgrey'} onPress={() => this.renderRecent()}>Recent</Button>
-                    <Button style={styles.listSelecters} icon={'alert'} mode={'contained'} labelStyle={styles.selecterText} color={'#7609FF'} onPress={() => this.renderAlerts()}>Alerts</Button>
-                </View>
+                
                 {/*Shows Alerts*/}
                 {this.state.showAlerts ?
                     <ScrollView style={styles.avatarContainer}>
@@ -466,24 +266,6 @@ export default class Home extends React.Component{
                 </ScrollView> : null
                 }
 
-                {/*Shows Favorites*/}
-                {this.state.showFavorites ?
-                    <ScrollView style={styles.avatarContainer}
-                    refreshControl={<RefreshControl refreshing={this.state.favRefreshing}
-                    onRefresh={this.refreshFavs}/>}>
-                        {this.favorites()}
-                </ScrollView> : null}
-
-                {/*Shows Recent*/}
-                {this.state.showRecent ?
-                 <ScrollView style={styles.avatarContainer}
-                 refreshControl={<RefreshControl refreshing={this.state.refreshing}
-                                                 onRefresh={this.onRefresh}/>}>
-                     {this.recents()}
-                </ScrollView> : null}
-
-            {/*Renders Modal*/}
-                {this.renderModal()}
                     </MenuDrawer>
 
             </View>
@@ -500,6 +282,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     avatarContainer:{
+        backgroundColor: 'lightgrey',
         flexDirection: 'column',
         paddingTop: 10,
         marginBottom: height/10,
@@ -511,7 +294,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
     favItem:{
-        backgroundColor: '#000556',
+        backgroundColor: '#EAF499',
         margin: 10,
         borderRadius: 5,
     },

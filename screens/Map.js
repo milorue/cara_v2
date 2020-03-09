@@ -48,6 +48,7 @@ export default class Map extends React.Component{
                 latitude: null,
                 longitude: null,
             },
+            destSearch: '',
             icon: 'pin',
             description: '',
             image: '',
@@ -83,7 +84,14 @@ export default class Map extends React.Component{
             onReady={result => {
               console.log('Duration: ' + result.distance + ' km');
               console.log('Duration:' + result.duration + ' min.');
-                console.log('Coordinates: ' + result.coordinates)
+              this.setState({route: result.coordinates})
+                            this.handleRouteSubmit();
+
+
+
+              // result.coordinates.map((coordinate) =>{
+              //     console.log(coordinate)
+              // })
             }}/>
             )
         }
@@ -95,7 +103,6 @@ export default class Map extends React.Component{
     };
 
     handleRouteSubmit = () =>{  // need to implement a simple client grabber function for production this works for now
-        Keyboard.dismiss();
         const stitchAppClient = Stitch.defaultAppClient;
         const mongoClient = stitchAppClient.getServiceClient(
             RemoteMongoClient.factory,
@@ -107,16 +114,14 @@ export default class Map extends React.Component{
         routes.insertOne({
             userId: stitchAppClient.auth.user.id,
             title: this.state.startBuilding + ' -> ' + this.state.endBuilding,
-            description: this.state.description,
+            description: 'Starting at ' +this.state.startBuilding + ' going towards ' + this.state.endBuilding,
             icon: this.state.icon,
-            color: this.determineColor(),
             route: this.state.route,
             startLocation: this.state.startPosition,
             endLocation: this.state.endPosition,
             favorite: this.state.favorite,
             recent: true,
             date: new Date(),
-            image: this.generateImage(),
             type: 'default',
         })
             .then(() =>{
@@ -135,17 +140,6 @@ export default class Map extends React.Component{
         console.log('Hit Image Generator')
         return imageURL;
     }
-
-    determineColor(){
-        var randNum = Math.floor(Math.random() * 4);
-        return this.state.color[randNum]
-    };
-
-    remountMap = () =>{
-        this.setState(({reloadValue}) => ({
-            reloadValue: reloadValue + 1
-        }));
-    };
 
     showModal = (modalId) => {
         this.setState({modalVisible: true, favoriteId: modalId});
@@ -464,6 +458,10 @@ export default class Map extends React.Component{
                     <Appbar.Content title={'Map'} subtitle={this.state.currentUserId}/>
                     <Appbar.Action icon={'reload'} onPress={()=>this.componentDidMount()}/>
                 </Appbar.Header>
+                    <Searchbar placeholder={'Search Destinations'}
+                               style={{marginTop: 10}}
+                    onChangeText={query => { this.setState({destSearch: query})}}
+                    value={this.state.destSearch}/>
                     <View style={{flexDirection: 'row', backgroundColor: 'transparent', marginHorizontal: 10, marginTop: 10}}>
                         <Button mode={'contained'} onPress={this.openStartBuilding} color={'#00C256'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.startBuilding}</Button>
                         <Button mode={'contained'} onPress={this.openEndBuilding} color={'#C2006D'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.endBuilding}</Button>

@@ -1,8 +1,11 @@
 import React from 'react';
-import {View, Text, StyleSheet, Image, ScrollView} from 'react-native'
+import {View, Text, StyleSheet, Image, ScrollView, Dimensions} from 'react-native'
 import logo from '/home/mrue/senior_project/cara/assets/logo.png'
 import {TextInput, Caption, Button, HelperText} from "react-native-paper";
 import {Stitch, UserPasswordCredential, UserPasswordAuthProviderClient} from 'mongodb-stitch-react-native-sdk'
+
+const height = Dimensions.get('window').height;
+const width = Dimensions.get('window').width;
 
 export default class Signup extends React.Component{
 
@@ -52,7 +55,7 @@ export default class Signup extends React.Component{
                     <Image source={logo} style={{width: 60, height: 60}}/>
                 </View>
 
-                <View style={styles.loginContainer}>
+                <ScrollView style={styles.loginContainer}>
                     <Caption style={{color: '#4D4CB3'}}>First Name</Caption>
                     <TextInput
                     label={'First Name'}
@@ -144,7 +147,10 @@ export default class Signup extends React.Component{
                     style={styles.loginButton}
                     mode={'contained'}
                     onPress={() => this.signIn()}>Sign In</Button>
-                </View>
+                    <View style={{height: height/10}}>
+
+                    </View>
+                </ScrollView>
 
                 <View style={styles.license}>
                     <Text style={{fontSize: 10, color: 'white'}}>Developed by Milo Rue © 2020</Text>
@@ -162,18 +168,18 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     logoContainer: {
-        flex: 1,
+        height: height/6,
         flexDirection: 'column',
         backgroundColor: '#14002E',
         alignItems: 'center',
         justifyContent: 'center',
     },
     loginContainer: {
-        flex: 7,
         flexDirection: 'column',
         backgroundColor: '#ffffff',
         margin: 10,
         borderRadius: 10,
+        height: height/1.3,
     },
     emailInput: {
         marginHorizontal: 20,
@@ -193,7 +199,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#7609FF'
     },
     license:{
-        flex: .5,
+        height: height/10,
         alignItems: 'center',
         backgroundColor: 'grey',
         justifyContent: 'center',

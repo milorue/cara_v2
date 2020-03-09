@@ -34,7 +34,7 @@ export default class FeatureMap extends React.Component{
             markers: undefined,
             name: '',
             description: '',
-            type: '',
+            type: 'other',
             markerId: undefined,
             location: {
                 latitude: 0,
