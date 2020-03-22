@@ -8,6 +8,8 @@ import {Stitch, RemoteMongoClient} from 'mongodb-stitch-react-native-sdk';
 import MenuDrawer from 'react-native-side-drawer'
 import MapViewDirections from "react-native-maps-directions";
 import googleKey from "../assets/apiKey";
+import GooglePlacesAutocomplete  from "react-native-google-places-autocomplete";
+
 
 import constructionIcon from '../assets/construction.png'
 
@@ -55,6 +57,7 @@ export default class Map extends React.Component{
             favorite: false,
             title: '',
             drawerState: false,
+            savedRouteSelected: null,
 
         }
     }
@@ -95,6 +98,18 @@ export default class Map extends React.Component{
             }}/>
             )
         }
+    }
+
+    renderSavedRoute = (route) => {
+        if(route != null){
+            return(
+                <Polyline
+                coordinates={route}
+                strokeWidth={4}
+                strokeColor={'red'}/>
+            )
+        }
+        return null;
     }
 
     toggleDrawer = () =>{
@@ -234,8 +249,14 @@ export default class Map extends React.Component{
 
     openFavorites = () =>{
         this.setState({favoritesVisible: true});
-        this.toggleDrawer();
-        this.loadFavorites();
+        if(this.state.drawerState === false){
+            this.loadFavorites()
+        }
+        else{
+            this.toggleDrawer();
+            this.loadFavorites();
+        }
+
     };
 
     closeFavorites = () =>{
@@ -259,6 +280,10 @@ export default class Map extends React.Component{
         }
     };
 
+    setSavedRoute(route){
+        this.setState({savedRouteSelected: route})
+    }
+
     renderFavoriteModal = () =>{
 
         if(this.state.modalVisible){
@@ -272,7 +297,7 @@ export default class Map extends React.Component{
                             <Card.Content>
                                 <Card.Cover source={{uri: favoriteInfo.image}}/>
                                 <Paragraph>{favoriteInfo.description}</Paragraph>
-                                <Button color={'#DE606D'} mode={'contained'}>Run Route</Button>
+                                <Button color={'#DE606D'} mode={'contained'} onPress={()=> this.setSavedRoute(favoriteInfo.route)}>Run Route</Button>
                             </Card.Content>
                         </Card>
                     </Modal>
@@ -380,8 +405,16 @@ export default class Map extends React.Component{
     };
 
     goToFeatures(){
-        this.toggleDrawer();
-        this.props.navigation.navigate('FeatureMap')
+        if(this.state.drawerState === false){
+            this.props.navigation.navigate('FeatureMap')
+        }
+
+        else{
+            this.toggleDrawer();
+            this.props.navigation.navigate('FeatureMap')
+        }
+
+
     }
 
     getUser(){
@@ -447,9 +480,7 @@ export default class Map extends React.Component{
                 {this.renderStartMarkers()}
                 {this.renderEndMarkers()}
                 {this.renderRoute()}
-                {/*<Polyline coordinates={this.state.route}*/}
-                {/*          strokeColor={'#F00000'}*/}
-                {/*          strokeWidth={4}/>*/}
+                {this.renderSavedRoute(this.state.savedRouteSelected)}
             </MapView>
 
                 <View style={styles.interactionLayer}>
@@ -458,13 +489,30 @@ export default class Map extends React.Component{
                     <Appbar.Content title={'Map'} subtitle={this.state.currentUserId}/>
                     <Appbar.Action icon={'reload'} onPress={()=>this.componentDidMount()}/>
                 </Appbar.Header>
-                    <Searchbar placeholder={'Search Destinations'}
-                               style={{marginTop: 10}}
-                    onChangeText={query => { this.setState({destSearch: query})}}
-                    value={this.state.destSearch}/>
+
+
                     <View style={{flexDirection: 'row', backgroundColor: 'transparent', marginHorizontal: 10, marginTop: 10}}>
-                        <Button mode={'contained'} onPress={this.openStartBuilding} color={'#00C256'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.startBuilding}</Button>
-                        <Button mode={'contained'} onPress={this.openEndBuilding} color={'#C2006D'} icon={'map-marker'} style={styles.buildingButtons}>{this.state.endBuilding}</Button>
+                        <IconButton icon={'magnify'}
+                    style={{backgroundColor: 'lightgrey', marginHorizontal: 10, flex: 1}}
+                    size={30} onPress={() => console.log('test')}/>
+
+                    <IconButton icon={'star'}
+                    style={{backgroundColor: '#E89F17', flex: 1}}
+                    size={30}
+                    onPress={this.openFavorites}/>
+
+                    <IconButton icon={'chart-line-variant'}
+                    style={{backgroundColor: '#8A3E5A', flex: 1}}
+                    size={30}
+                    onPress={() => console.log('test')}
+                    color={'white'}/>
+
+                    <IconButton icon={'map-marker-plus'}
+                    style={{backgroundColor: '#000556', flex: 1}}
+                    size={30}
+                    onPress={()=> this.goToFeatures()}
+                    color={'white'}/>
+
                         </View>
                     <View style={styles.buttonContainer}>
 

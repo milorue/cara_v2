@@ -10,9 +10,9 @@ import Home from "../screens/Home";
 import Map from "../screens/Map";
 import Community from "../screens/Community";
 import {IconButton} from "react-native-paper";
-import ConceptHome from "../screens/ConceptHome";
 import FeatureMap from "../screens/FeatureMap";
 import Trips from "../screens/Trips";
+import MyMapContainer from "../components/MyMapContainer";
 
 
 const LoginStack = createStackNavigator({
@@ -63,12 +63,18 @@ const MapStack = createStackNavigator({
         navigationOptions:{
             headerShown: false,
         }
+    },
+    Search:{
+        screen: MyMapContainer,
+        navigationOptions:{
+            headerShown: false,
+        }
     }
 });
 
 const CommunityStack = createStackNavigator({
     Community:{
-        screen: Community,
+        screen: MyMapContainer,
         navigationOptions:{
             headerShown: false,
         }
