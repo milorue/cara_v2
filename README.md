@@ -1,6 +1,6 @@
 # Cara (Campus Accessibility & Routing Application)
 ## A mobile application aimed at providing accessible mapping and related services for college campuses
-#### If you are looking for the cara API then go [here](github.com/milorue/cara_api)
+#### If you are looking for the cara API then go here https://github.com/milorue/cara_api
 #### Note to maintainer: 
 ##### You will need your own google & stitch api keys in files named apiKey.js & credentials.js respectively
 
